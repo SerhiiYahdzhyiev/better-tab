@@ -4,3 +4,26 @@ Make your [chrome.tabs.Tab](https://developer.chrome.com/docs/extensions/referen
 smarter.
 
 So that it can do some neat stuff on its own.
+
+## Add it to your extension
+
+
+## Now Your Tab Can
+
+1. Close itself:
+
+   ```javascript
+   const [tab1, tab2] = await chrome.tabs.query({});
+
+   await tab1.close();
+   await tab2.remove(); // Basically the same as close (just an alias)
+   ```
+
+2. Update itself:
+
+   ```javascript
+   const [tab1, tab2] = await chrome.tabs.query({});
+
+   await tabs.update({active: true});
+
+   ```
