@@ -7,6 +7,7 @@ So that it can do some neat stuff on its own.
 
 ## Add it to your extension
 
+TODO: Write this sections
 
 ## Now Your Tab Can
 
@@ -19,6 +20,8 @@ So that it can do some neat stuff on its own.
    await tab2.remove(); // Basically the same as close (just an alias)
    ```
 
+   TODO: Provide callback example...
+
 2. Update itself:
 
    ```javascript
@@ -27,3 +30,5 @@ So that it can do some neat stuff on its own.
    await tabs.update({active: true});
 
    ```
+
+   TODO: Provide callback example...
