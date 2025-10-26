@@ -26,7 +26,6 @@ Object.assign(globalThis, { og_query: chrome.tabs.query });
 
 const p = new Proxy(chrome.tabs.query, {
     apply(fn, this_, args) {
-        console.log("Proxied!");
         const og_cb = args[1];
         if (og_cb) {
             args[1] = (tabs) => {
