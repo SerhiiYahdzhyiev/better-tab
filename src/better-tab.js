@@ -8,6 +8,7 @@ function BetterTab(chromeTab) {
     this.close = this.close.bind(this);
     this.remove = this.close.bind(this);
     this.update = this.update.bind(this);
+    this.focus = this.focus.bind(this);
 }
 
 BetterTab.close = async function() {
@@ -16,6 +17,22 @@ BetterTab.close = async function() {
         this.removed = true
         // TODO: "Garbage collect" | nullify this, self-destruct ?
 };
+
+BetterTab.focus = function(callback) {
+    if (!this.removed) {
+        if (callback) {
+            this.update(
+                {active:true}, (tab) => callback(new BetterTab(tab))
+            )
+        } else {
+            return new Promise(resolve => {
+                this.update({active:true}, tab => {
+                    resolve(new BetterTab(tab))
+                });
+            })
+        }
+    }
+}
 
 BetterTab.update = function(payload, callback) {
     if (!this.removed) {
