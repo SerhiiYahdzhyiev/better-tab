@@ -13,6 +13,7 @@ function BetterTab(chromeTab) {
 BetterTab.close = async function() {
     if (!this.removed)
         await chrome.tabs.remove(this.id)
+        this.removed = true
         // TODO: "Garbage collect" | nullify this, self-destruct ?
 };
 
