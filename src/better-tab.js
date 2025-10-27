@@ -4,21 +4,32 @@ function BetterTab(chromeTab) {
     Object.assign(this, chromeTab);
     Object.setPrototypeOf(this, BetterTab);
 
+    this.removed = false;
     this.close = this.close.bind(this);
     this.remove = this.close.bind(this);
     this.update = this.update.bind(this);
 }
 
 BetterTab.close = async function() {
-    await chrome.tabs.remove(this.id)
-    // TODO: "Garbage collect" | nullify this, self-destruct
+    if (!this.removed)
+        await chrome.tabs.remove(this.id)
+        // TODO: "Garbage collect" | nullify this, self-destruct ?
 };
 
-// TODO: Make it compatible with the original chrome.tabs.update signature:
-//       handle optional callback
-BetterTab.update = async function(payload) {
-    await chrome.tabs.update(this.id, payload);
-    Object.assign(this, payload);
+BetterTab.update = function(payload, callback) {
+    if (!this.removed) {
+        if (callback) {
+            chrome.tabs.update(
+                this.id, payload, (tab) => callback(new BetterTab(tab))
+            )
+        } else {
+            return new Promise(resolve => {
+                chrome.tabs.update(this.id, payload, tab => {
+                    resolve(new BetterTab(tab))
+                });
+            })
+        }
+    }
 }
 
 Object.assign(globalThis, { BetterTab });
