@@ -8,9 +8,11 @@ export default async function() {
     chrome.tabs.query({active:false}, (tabs) => {
         const [tab] = tabs.filter(getTargetTab)
         console.log(testTabId, tab)
-        tab.update({active:true}, (tab) => {
+        tab.focus((tab) => {
             console.log(tab)
-            sleep(2000).then(() => tab.close())
+            sleep(2000)
+                .then(() => tab.close())
+                .then(() => tab.close())
         })
     })
 }

@@ -9,13 +9,30 @@ function BetterTab(chromeTab) {
     this.remove = this.close.bind(this);
     this.update = this.update.bind(this);
     this.focus = this.focus.bind(this);
-}
+};
 
 BetterTab.close = async function() {
-    if (!this.removed)
-        await chrome.tabs.remove(this.id)
-        this.removed = true
-        // TODO: "Garbage collect" | nullify this, self-destruct ?
+    if (!this.removed) {
+        await chrome.tabs.remove(this.id);
+        this.removed = true;
+    }
+    // TODO: "Garbage collect" | nullify this, self-destruct ?
+};
+
+BetterTab.update = function(payload, callback) {
+    if (!this.removed) {
+        if (callback) {
+            chrome.tabs.update(
+                this.id, payload, (tab) => callback(new BetterTab(tab))
+            );
+        } else {
+            return new Promise(resolve => {
+                chrome.tabs.update(this.id, payload, tab => {
+                    resolve(new BetterTab(tab))
+                });
+            });
+        }
+    }
 };
 
 BetterTab.focus = function(callback) {
@@ -23,32 +40,16 @@ BetterTab.focus = function(callback) {
         if (callback) {
             this.update(
                 {active:true}, (tab) => callback(new BetterTab(tab))
-            )
+            );
         } else {
             return new Promise(resolve => {
                 this.update({active:true}, tab => {
                     resolve(new BetterTab(tab))
                 });
-            })
+            });
         }
     }
-}
-
-BetterTab.update = function(payload, callback) {
-    if (!this.removed) {
-        if (callback) {
-            chrome.tabs.update(
-                this.id, payload, (tab) => callback(new BetterTab(tab))
-            )
-        } else {
-            return new Promise(resolve => {
-                chrome.tabs.update(this.id, payload, tab => {
-                    resolve(new BetterTab(tab))
-                });
-            })
-        }
-    }
-}
+};
 
 Object.assign(globalThis, { BetterTab });
 Object.assign(globalThis, { og_query: chrome.tabs.query });
