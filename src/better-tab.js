@@ -131,6 +131,38 @@ const gp = new Proxy(chrome.tabs.get, {
     }
 });
 
+const gcp = new Proxy(chrome.tabs.getCurrent, {
+    async apply(fn) {
+        console.log(fn)
+        const tab = await fn();
+        console.log(tab)
+        if (tab) return new BetterTab(tab);
+        try {
+            const windows = await chrome.windows.getAll()
+            const visible = windows.filter(
+                w => (
+                    (w.focused ||  w.state !== "minimized")
+                    && w.type === "normal"
+                )
+            )
+            console.log(visible);
+            if (visible.length) {
+                const candidates =
+                    await chrome.tabs.query({
+                        windowId:visible[0].id, active:true
+                    });
+                console.log(candidates);
+                if (candidates.length)
+                    return candidates[0];
+            }
+        } catch(error) {
+            console.error(error);
+            return undefined;
+        }
+    }
+})
+
 chrome.tabs.create = cp;
 chrome.tabs.get = gp;
 chrome.tabs.query = qp;
+chrome.tabs.getCurrent = gcp;
