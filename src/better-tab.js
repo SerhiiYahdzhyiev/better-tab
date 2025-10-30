@@ -7,6 +7,8 @@ function BetterTab(chromeTab) {
     this.removed = false;
     this.close = this.close.bind(this);
     this.remove = this.close.bind(this);
+    this.detectLanguage = this.detectLanguage.bind(this)
+    this.discard = this.discard.bind(this)
     this.update = this.update.bind(this);
     this.focus = this.focus.bind(this);
 };
@@ -18,6 +20,20 @@ BetterTab.close = async function() {
     }
     // TODO: "Garbage collect" | nullify this, self-destruct ?
 };
+
+BetterTab.discard = async function () {
+    if (this.removed) return
+    const tab = await chrome.tabs.discard(this.id)
+    if (tab) return new BetterTab(tab)
+    return undefined
+}
+
+BetterTab.duplicate = async function() {
+    if (this.removed) return
+    const tab = await chrome.tabs.duplicate(this.id)
+    if (tab) return new BetterTab(tab)
+    return undefined
+}
 
 BetterTab.update = function(payload, callback) {
     if (!this.removed) {
@@ -34,6 +50,11 @@ BetterTab.update = function(payload, callback) {
         }
     }
 };
+
+BetterTab.detectLanguage = async function() {
+    if (this.removed) return
+    return await chrome.tabs.detectLanguage(this.id)
+}
 
 BetterTab.focus = function(callback) {
     if (!this.removed) {
@@ -96,5 +117,20 @@ const cp = new Proxy(chrome.tabs.create, {
     }
 });
 
-chrome.tabs.query = qp;
+const gp = new Proxy(chrome.tabs.get, {
+    apply(fn, _, args) {
+        return new Promise((res, rej )=> {
+            fn(...args, (tab) => {
+                if (chrome.runtime && chrome.runtime.lastError) {
+                    rej(chrome.runtime.lastError)
+                } else {
+                    res(new BetterTab(tab))
+                }
+            });
+        });
+    }
+});
+
 chrome.tabs.create = cp;
+chrome.tabs.get = gp;
+chrome.tabs.query = qp;

@@ -6,14 +6,15 @@ export default async function() {
     const [testTab] = await chrome.tabs.query({active:false})
         .then(tabs => tabs.filter(getTargetTab));
     await testTab.focus();
-    let [updatedTab] = await chrome.tabs.query({})
-        .then(tabs => tabs.filter(getTargetTab))
+    let updatedTab = await chrome.tabs.get(targetTab.id)
     console.log(updatedTab);
     await testTab.update({url:'https://google.com'});
     await sleep(2000);
-    [updatedTab] = await chrome.tabs.query({})
-        .then(tabs => tabs.filter(getTargetTab));
+    updatedTab = await chrome.tabs.get(updatedTab.id)
     await sleep(2000);
-    await updatedTab.close();
+    console.log((await updatedTab.detectLanguage()));
+    updatedTab = await updatedTab.discard();
+    await sleep(1000);
+    console.log(updatedTab.discarded);
     await updatedTab.close();
 };
