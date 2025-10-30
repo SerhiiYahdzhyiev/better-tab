@@ -9,6 +9,7 @@ function BetterTab(chromeTab) {
     this.remove = this.close.bind(this);
     this.detectLanguage = this.detectLanguage.bind(this)
     this.discard = this.discard.bind(this)
+    this.reload = this.reload.bind(this)
     this.update = this.update.bind(this);
     this.focus = this.focus.bind(this);
 };
@@ -33,6 +34,11 @@ BetterTab.duplicate = async function() {
     const tab = await chrome.tabs.duplicate(this.id)
     if (tab) return new BetterTab(tab)
     return undefined
+}
+
+BetterTab.reload = async function () {
+    if (this.removed) return
+    await chrome.tabs.reload(this.id)
 }
 
 BetterTab.update = function(payload, callback) {
@@ -133,9 +139,7 @@ const gp = new Proxy(chrome.tabs.get, {
 
 const gcp = new Proxy(chrome.tabs.getCurrent, {
     async apply(fn) {
-        console.log(fn)
         const tab = await fn();
-        console.log(tab)
         if (tab) return new BetterTab(tab);
         try {
             const windows = await chrome.windows.getAll()
@@ -145,13 +149,13 @@ const gcp = new Proxy(chrome.tabs.getCurrent, {
                     && w.type === "normal"
                 )
             )
-            console.log(visible);
+            console.debug("visible windows", visible);
             if (visible.length) {
                 const candidates =
                     await chrome.tabs.query({
                         windowId:visible[0].id, active:true
                     });
-                console.log(candidates);
+                console.debug("tab candidates", candidates);
                 if (candidates.length)
                     return candidates[0];
             }
