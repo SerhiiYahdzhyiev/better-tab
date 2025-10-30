@@ -149,18 +149,16 @@ const gcp = new Proxy(chrome.tabs.getCurrent, {
                     && w.type === "normal"
                 )
             )
-            console.debug("visible windows", visible);
             if (visible.length) {
                 const candidates =
                     await chrome.tabs.query({
                         windowId:visible[0].id, active:true
                     });
-                console.debug("tab candidates", candidates);
                 if (candidates.length)
                     return candidates[0];
             }
         } catch(error) {
-            console.error(error);
+            console.error(error)
             return undefined;
         }
     }
