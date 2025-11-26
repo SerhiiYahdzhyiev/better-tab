@@ -36,10 +36,18 @@ BetterTab.duplicate = async function() {
     return undefined
 }
 
+BetterTab.mute = async function(callback) {
+    return await this.update({muted:true}, callback)
+}
+
 BetterTab.reload = async function (payload) {
     if (this.removed) return
     await chrome.tabs.reload(this.id, payload)
     return this
+}
+
+BetterTab.unmute = async function(callback) {
+    return await this.update({muted:false}, callback)
 }
 
 BetterTab.update = function(payload, callback) {
