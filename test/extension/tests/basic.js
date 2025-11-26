@@ -1,6 +1,7 @@
 import {sleep} from "./utils.js";
 
 export default async function() {
+    console.debug("Runnnig test: basic...")
     const targetTab = await chrome.tabs.create({active:false});
     const getTargetTab = (tab) => tab.id === targetTab.id;
     const [testTab] = await chrome.tabs.query({active:false})

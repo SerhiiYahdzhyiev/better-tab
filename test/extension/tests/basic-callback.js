@@ -1,6 +1,7 @@
 import {sleep} from "./utils.js";
 
 export default async function() {
+    console.debug("Runnnig test: basic-callback... ")
     let testTabId;
     chrome.tabs.create({active:false}, (tab) => testTabId = tab.id);
     console.log(testTabId);
