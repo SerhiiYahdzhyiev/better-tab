@@ -92,6 +92,7 @@ Object.assign(globalThis, { og_query: chrome.tabs.query });
 
 const qp = new Proxy(chrome.tabs.query, {
     apply(fn, this_, args) {
+        if (!args.length || !args[0]) args[0] = {};
         const og_cb = args[1];
         if (og_cb) {
             args[1] = (tabs) => {
@@ -115,6 +116,7 @@ const qp = new Proxy(chrome.tabs.query, {
 
 const cp = new Proxy(chrome.tabs.create, {
     apply(fn, _, args) {
+        if (!args.length || !args[0]) args[0] = {};
         const cb = args[1];
         if (cb) {
             fn(args[0], (tab) => cb(new BetterTab(tab)));
@@ -177,3 +179,5 @@ chrome.tabs.create = cp;
 chrome.tabs.get = gp;
 chrome.tabs.query = qp;
 chrome.tabs.getCurrent = gcp;
+
+console.debug("Better Tab initalized!")
