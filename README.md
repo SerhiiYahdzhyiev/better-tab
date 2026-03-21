@@ -1,56 +1,253 @@
 # Better Tab
 
-Make your [chrome.tabs.Tab](https://developer.chrome.com/docs/extensions/reference/api/tabs?hl=ru#type-Tab)
+Make your [chrome.tabs.Tab](https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab)
 smarter.
-
-So that it can do some neat stuff on its own.
 
 ## Overview
 
-It's a pretty simple Proxy for `chrome.tabs.query` that wraps each
-[chrome.tabs.Tab](https://developer.chrome.com/docs/extensions/reference/api/tabs?hl=ru#type-Tab)
-with a `BetterTab` "class". If you're an extension developer you could've
-probably write it yourself, but with this project you can save time.
+Better Tab is a small library for Chrome extension developers. It wraps the most
+useful `chrome.tabs` methods with Proxies so that any `Tab` object they return
+is automatically a `BetterTab` — an enhanced version of the native tab that
+can perform operations on itself directly.
 
-### Somehow important considerations
+## Installation
 
-The author of this project is lazy, so that means:
-- No out-of-the-box minification, uglifying or similar stuff
-- No convenient scripts for development/testing setup
-- No typescript integration
-- Supporting docs are as minimal as possible
+1. Download `better-tab.min.js` from the [Releases](../../releases) page
+   (or copy from `src/`) and place it somewhere in your extension project.
 
-If you want to improve/add anything from above (if you really need it)
-open an issue or a PR, and maybe I'll look into it.
+2. Import it at the top of your background script:
 
-## Add it to your extension
+```javascript
+import "./path/to/better-tab.js";
+```
 
-Currently this repo only has an example for manifest version 3 in
-`test/extension`. In a nutshell it is super simple:
+That's it. The library patches `chrome.tabs` automatically on import - no manual
+setup required.
 
-- place the `better-tab.js` file from `src` somewhere in your project
-- attach it to your background script via `import "<path_to>/better-tab.js"`
+> Manifest V3 is required. See `test/extension/` for a working example.
 
-## Now Your Tab Can
+## How It Works
 
-1. Close itself:
+When loaded, Better Tab replaces several `chrome.tabs` methods with Proxy wrappers.
+These wrappers intercept results and wrap any returned `Tab` objects in `BetterTab`,
+which extends the native tab with its own instance methods. Your existing code that
+calls `chrome.tabs.query()`, etc. keeps working — it just gets smarter tabs back.
 
-   ```javascript
-   const [tab1, tab2] = await chrome.tabs.query({});
+## Proxied Methods
 
-   await tab1.close();
-   await tab2.remove(); // Basically the same as close (just an alias)
-   ```
+The following `chrome.tabs` methods are replaced. Their signatures are identical to
+the originals — the only difference is that returned `Tab` objects are `BetterTab`
+instances.
 
-   TODO: Provide callback example...
+### `chrome.tabs.query(queryInfo?, callback?)`
 
-2. Update itself:
+```javascript
+// Promise
+const tabs = await chrome.tabs.query({ active: true });
 
-   ```javascript
-   const [tab1, tab2] = await chrome.tabs.query({});
+// Callback
+chrome.tabs.query({ active: true }, (tabs) => {
+    console.log(tabs); // BetterTab[]
+});
+```
 
-   await tabs.update({active: true});
+### `chrome.tabs.create(createProperties?, callback?)`
 
-   ```
+```javascript
+// Promise
+const tab = await chrome.tabs.create({ url: "https://example.com" });
 
-   TODO: Provide callback example...
+// Callback
+chrome.tabs.create({ url: "https://example.com" }, (tab) => {
+    console.log(tab); // BetterTab
+});
+```
+
+### `chrome.tabs.get(tabId)`
+
+Promise only.
+
+```javascript
+const tab = await chrome.tabs.get(tabId); // BetterTab
+```
+
+### `chrome.tabs.getCurrent()`
+
+Returns the tab for the current script context. Falls back to querying the
+active tab in the first visible window if the native call returns nothing
+(e.g. in a service worker context where `getCurrent` may not behave as
+expected).
+
+Promise only.
+
+```javascript
+const tab = await chrome.tabs.getCurrent(); // BetterTab | undefined
+```
+
+### `chrome.tabs.update(tabId?, updateProperties, callback?)`
+
+```javascript
+// Promise
+const tab = await chrome.tabs.update(tabId, { muted: true });
+
+// Callback
+chrome.tabs.update(tabId, { muted: true }, (tab) => {
+    console.log(tab); // BetterTab
+});
+```
+
+### `chrome.tabs.duplicate(tabId, callback?)`
+
+```javascript
+// Promise
+const copy = await chrome.tabs.duplicate(tabId); // BetterTab | undefined
+
+// Callback
+chrome.tabs.duplicate(tabId, (copy) => {
+    console.log(copy); // BetterTab | undefined
+});
+```
+
+### `chrome.tabs.discard(tabId?, callback?)`
+
+```javascript
+// Promise
+const tab = await chrome.tabs.discard(tabId); // BetterTab | undefined
+
+// Callback
+chrome.tabs.discard(tabId, (tab) => {
+    console.log(tab); // BetterTab | undefined
+});
+```
+
+### `chrome.tabs.move(tabIds, moveProperties, callback?)`
+
+`tabIds` can be a single tab ID or an array of IDs. Returns a `BetterTab` or
+`BetterTab[]` accordingly.
+
+```javascript
+// Promise
+const moved = await chrome.tabs.move(tabId, { index: 0 });
+
+// Callback
+chrome.tabs.move([tab1.id, tab2.id], { index: -1 }, (tabs) => {
+    console.log(tabs); // BetterTab[]
+});
+```
+
+---
+
+## BetterTab Instance Methods
+
+All methods are no-ops if `tab.removed` is `true`.
+
+### `tab.close()` / `tab.remove()`
+
+Closes the tab. Sets `tab.removed = true` on success. `remove` is an alias.
+
+```javascript
+// Promise
+await tab.close();
+
+// Callback (via remove alias)
+tab.remove(() => console.log("closed"));
+```
+
+### `tab.update(updateProperties, callback?)`
+
+Updates the tab. Returns a new `BetterTab` reflecting the updated state.
+
+```javascript
+// Promise
+const updated = await tab.update({ url: "https://example.com" });
+
+// Callback
+tab.update({ url: "https://example.com" }, (updated) => {
+    console.log(updated.url);
+});
+```
+
+### `tab.focus(callback?)`
+
+Makes the tab active. Shorthand for `tab.update({ active: true })`.
+
+```javascript
+// Promise
+const focused = await tab.focus();
+
+// Callback
+tab.focus((focused) => console.log(focused.active)); // true
+```
+
+### `tab.mute(callback?)`
+
+Mutes the tab. Shorthand for `tab.update({ muted: true })`.
+
+```javascript
+// Promise
+await tab.mute();
+
+// Callback
+tab.mute((updated) => console.log(updated.mutedInfo));
+```
+
+### `tab.unmute(callback?)`
+
+Unmutes the tab. Shorthand for `tab.update({ muted: false })`.
+
+```javascript
+await tab.unmute();
+```
+
+### `tab.reload(reloadProperties?)`
+
+Reloads the tab. Returns `this` for chaining.
+
+```javascript
+await tab.reload();
+await tab.reload({ bypassCache: true });
+```
+
+### `tab.discard()`
+
+Discards the tab to free memory. Returns a new `BetterTab` (or `undefined`
+if discarding failed).
+
+```javascript
+const discarded = await tab.discard();
+console.log(discarded.discarded); // true
+```
+
+### `tab.duplicate()`
+
+Creates a duplicate of the tab. Returns a new `BetterTab` (or `undefined` if
+duplication failed).
+
+```javascript
+const copy = await tab.duplicate();
+```
+
+### `tab.detectLanguage()`
+
+Detects the primary language of the tab's content.
+
+```javascript
+const lang = await tab.detectLanguage();
+console.log(lang); // e.g. "en"
+```
+
+---
+
+## Properties
+
+### `tab.removed`
+
+`Boolean`. Set to `true` after `tab.close()` completes. Methods that modify
+the tab check this flag and silently no-op if it is set, preventing errors
+from operating on a closed tab.
+
+```javascript
+await tab.close();
+console.log(tab.removed); // true
+await tab.reload();        // no-op, safe to call
+```
