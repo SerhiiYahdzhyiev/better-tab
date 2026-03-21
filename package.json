@@ -1,0 +1,17 @@
+{
+    "name": "better-tab",
+    "version": "0.0.1",
+    "description": "Make your chrome.tabs.Tab smarter.",
+    "scripts": {
+        "lint": "eslint src/",
+        "format": "prettier --write src/",
+        "format:check": "prettier --check src/",
+        "build": "terser src/better-tab.js -o better-tab.min.js --compress --mangle"
+    },
+    "devDependencies": {
+        "eslint": "^9.0.0",
+        "globals": "^15.0.0",
+        "prettier": "^3.0.0",
+        "terser": "^5.0.0"
+    }
+}
