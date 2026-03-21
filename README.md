@@ -13,7 +13,8 @@ can perform operations on itself directly.
 ## Installation
 
 1. Download `better-tab.min.js` from the [Releases](../../releases) page
-   (or copy from `src/`) and place it somewhere in your extension project.
+   (or build it yourself with `npm run build`) and place it somewhere in your
+   extension project.
 
 2. Import it at the top of your background script:
 
@@ -146,11 +147,7 @@ All methods are no-ops if `tab.removed` is `true`.
 Closes the tab. Sets `tab.removed = true` on success. `remove` is an alias.
 
 ```javascript
-// Promise
 await tab.close();
-
-// Callback (via remove alias)
-tab.remove(() => console.log("closed"));
 ```
 
 ### `tab.update(updateProperties, callback?)`
@@ -213,9 +210,14 @@ await tab.reload({ bypassCache: true });
 Discards the tab to free memory. Returns a new `BetterTab` (or `undefined`
 if discarding failed).
 
+> **Note:** Chrome assigns the discarded tab a new ID. The returned `BetterTab`
+> has the updated ID — the original instance becomes stale and should no longer
+> be used.
+
 ```javascript
 const discarded = await tab.discard();
 console.log(discarded.discarded); // true
+// Use `discarded` going forward — tab.id is now stale
 ```
 
 ### `tab.duplicate()`
