@@ -15,9 +15,9 @@ function BetterTab(chromeTab) {
     this.focus = this.focus.bind(this);
     this.mute = this.mute.bind(this);
     this.unmute = this.unmute.bind(this);
-};
+}
 
-BetterTab.close = async function() {
+BetterTab.close = async function () {
     if (!this.removed) {
         await chrome.tabs.remove(this.id);
         this.removed = true;
@@ -35,19 +35,19 @@ BetterTab.duplicate = function () {
     return chrome.tabs.duplicate(this.id);
 };
 
-BetterTab.mute = async function(callback) {
-    return await this.update({muted:true}, callback)
-}
+BetterTab.mute = async function (callback) {
+    return await this.update({ muted: true }, callback);
+};
 
 BetterTab.reload = async function (payload) {
-    if (this.removed) return
-    await chrome.tabs.reload(this.id, payload)
-    return this
-}
+    if (this.removed) return;
+    await chrome.tabs.reload(this.id, payload);
+    return this;
+};
 
-BetterTab.unmute = async function(callback) {
-    return await this.update({muted:false}, callback)
-}
+BetterTab.unmute = async function (callback) {
+    return await this.update({ muted: false }, callback);
+};
 
 BetterTab.update = function (payload, callback) {
     if (!this.removed) {
@@ -59,10 +59,10 @@ BetterTab.update = function (payload, callback) {
     }
 };
 
-BetterTab.detectLanguage = async function() {
-    if (this.removed) return
-    return await chrome.tabs.detectLanguage(this.id)
-}
+BetterTab.detectLanguage = async function () {
+    if (this.removed) return;
+    return await chrome.tabs.detectLanguage(this.id);
+};
 
 BetterTab.focus = function (callback) {
     if (!this.removed) {
@@ -88,13 +88,13 @@ const qp = new Proxy(chrome.tabs.query, {
                     if (chrome.runtime && chrome.runtime.lastError) {
                         rej(chrome.runtime.lastError);
                     } else {
-                        res(tabs.map(t => new BetterTab(t)));
+                        res(tabs.map((t) => new BetterTab(t)));
                     }
                 });
             });
         }
         return fn.apply(this_, args);
-    }
+    },
 });
 
 const cp = new Proxy(chrome.tabs.create, {
@@ -114,21 +114,21 @@ const cp = new Proxy(chrome.tabs.create, {
                 });
             });
         }
-    }
+    },
 });
 
 const gp = new Proxy(chrome.tabs.get, {
     apply(fn, _, args) {
-        return new Promise((res, rej )=> {
+        return new Promise((res, rej) => {
             fn(...args, (tab) => {
                 if (chrome.runtime && chrome.runtime.lastError) {
-                    rej(chrome.runtime.lastError)
+                    rej(chrome.runtime.lastError);
                 } else {
-                    res(new BetterTab(tab))
+                    res(new BetterTab(tab));
                 }
             });
         });
-    }
+    },
 });
 
 const gcp = new Proxy(chrome.tabs.getCurrent, {
@@ -136,27 +136,25 @@ const gcp = new Proxy(chrome.tabs.getCurrent, {
         const tab = await fn();
         if (tab) return new BetterTab(tab);
         try {
-            const windows = await chrome.windows.getAll()
+            const windows = await chrome.windows.getAll();
             const visible = windows.filter(
-                w => (
-                    (w.focused ||  w.state !== "minimized")
-                    && w.type === "normal"
-                )
-            )
+                (w) =>
+                    (w.focused || w.state !== "minimized") &&
+                    w.type === "normal"
+            );
             if (visible.length) {
-                const candidates =
-                    await chrome.tabs.query({
-                        windowId:visible[0].id, active:true
-                    });
-                if (candidates.length)
-                    return candidates[0];
+                const candidates = await chrome.tabs.query({
+                    windowId: visible[0].id,
+                    active: true,
+                });
+                if (candidates.length) return candidates[0];
             }
-        } catch(error) {
-            console.error(error)
+        } catch (error) {
+            console.error(error);
             return undefined;
         }
-    }
-})
+    },
+});
 
 const up = new Proxy(chrome.tabs.update, {
     apply(fn, _, args) {
@@ -176,7 +174,7 @@ const up = new Proxy(chrome.tabs.update, {
                 });
             });
         }
-    }
+    },
 });
 
 const dp = new Proxy(chrome.tabs.duplicate, {
@@ -195,7 +193,7 @@ const dp = new Proxy(chrome.tabs.duplicate, {
                 });
             });
         }
-    }
+    },
 });
 
 const disp = new Proxy(chrome.tabs.discard, {
@@ -203,7 +201,8 @@ const disp = new Proxy(chrome.tabs.discard, {
         const lastArg = args[args.length - 1];
         const cb = typeof lastArg === "function" ? lastArg : null;
         if (cb) {
-            args[args.length - 1] = (tab) => cb(tab ? new BetterTab(tab) : undefined);
+            args[args.length - 1] = (tab) =>
+                cb(tab ? new BetterTab(tab) : undefined);
             fn.apply(null, args);
         } else {
             return new Promise((res, rej) => {
@@ -216,7 +215,7 @@ const disp = new Proxy(chrome.tabs.discard, {
                 });
             });
         }
-    }
+    },
 });
 
 const mp = new Proxy(chrome.tabs.move, {
@@ -239,7 +238,7 @@ const mp = new Proxy(chrome.tabs.move, {
                 });
             });
         }
-    }
+    },
 });
 
 chrome.tabs.create = cp;
@@ -251,4 +250,4 @@ chrome.tabs.move = mp;
 chrome.tabs.query = qp;
 chrome.tabs.update = up;
 
-console.debug("Better Tab initalized!")
+console.debug("Better Tab initalized!");
