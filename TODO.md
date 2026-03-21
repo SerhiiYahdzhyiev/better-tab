@@ -1,4 +1,3 @@
 # TODOs
 
-- [ ] Sync examples in README with the current state of the wrapper.
-- [ ] Mention additional proxies realized (?)
+- [ ] "Garbage collect" closed BetterTab instances (nullify `this` after `close()`)
