@@ -3,11 +3,11 @@ import {sleep} from "./utils.js";
 export default async function() {
     console.debug("Running test: proxy...");
 
-    // query
+    // INFO: query
     const queryTabs = await chrome.tabs.query();
     console.debug("query ->", queryTabs);
 
-    // create / update / duplicate / discard / move
+    // INFO: create / update / duplicate / discard / move
     const tab = await chrome.tabs.create({ active: false });
     console.debug("create ->", tab);
 
@@ -21,17 +21,19 @@ export default async function() {
     const discarded = await chrome.tabs.discard(tab.id);
     console.debug("discard ->", discarded);
 
-    const moved = await chrome.tabs.move(tab.id, { index: 0 });
+    // INFO: Chrome assigns a new tab ID after discarding, so use
+    //       discarded.id from here on
+    const moved = await chrome.tabs.move(discarded.id, { index: 0 });
     console.debug("move ->", moved);
 
-    // get / getCurrent
-    const fetched = await chrome.tabs.get(tab.id);
+    // INFO: get / getCurrent
+    const fetched = await chrome.tabs.get(discarded.id);
     console.debug("get ->", fetched);
 
     const current = await chrome.tabs.getCurrent();
     console.debug("getCurrent ->", current);
 
-    // clean up
-    await tab.close();
+    // INFO: clean up
+    await discarded.close();
     if (duped) await duped.close();
 }
