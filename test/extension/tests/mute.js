@@ -1,5 +1,5 @@
 export default async function() {
-    console.debug("Runnnig test: mute... ")
+    console.debug("Running test: mute... ")
     let tab = await chrome.tabs.create()
     tab = await tab.mute()
     console.debug("Muted", tab)
