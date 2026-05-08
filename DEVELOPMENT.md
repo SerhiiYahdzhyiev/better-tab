@@ -7,7 +7,8 @@
 
 ## Isolation
 
-> [!important] Prefer running npm commands in an isolated environment, such
+> [!warning]
+> Prefer running npm commands in an isolated environment, such
 > as a Docker or Podman container, instead of directly on the host.
 > This limits the filesystem and user-account access available to dependency
 > install scripts and other package lifecycle hooks.
