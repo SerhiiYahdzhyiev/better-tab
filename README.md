@@ -136,8 +136,6 @@ chrome.tabs.move([tab1.id, tab2.id], { index: -1 }, (tabs) => {
 });
 ```
 
----
-
 ## BetterTab Instance Methods
 
 All methods are no-ops if `tab.removed` is `true`.
@@ -210,7 +208,8 @@ await tab.reload({ bypassCache: true });
 Discards the tab to free memory. Returns a new `BetterTab` (or `undefined`
 if discarding failed).
 
-> **Note:** Chrome assigns the discarded tab a new ID. The returned `BetterTab`
+> [!note]
+> Chrome assigns the discarded tab a new ID. The returned `BetterTab`
 > has the updated ID — the original instance becomes stale and should no longer
 > be used.
 
@@ -237,8 +236,6 @@ Detects the primary language of the tab's content.
 const lang = await tab.detectLanguage();
 console.log(lang); // e.g. "en"
 ```
-
----
 
 ## Properties
 
