@@ -3,11 +3,28 @@
     "version": "0.1.0",
     "description": "Make your chrome.tabs.Tab smarter.",
     "license": "WTFPL",
+    "main": "src/better-tab.js",
+    "files": [
+        "src/",
+        "better-tab.min.js",
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/SerhiiYahdzhyiev/better-tab.git"
+    },
+    "bugs": {
+        "url": "https://github.com/SerhiiYahdzhyiev/better-tab/issues"
+    },
+    "homepage": "https://github.com/SerhiiYahdzhyiev/better-tab#readme",
     "scripts": {
         "lint": "eslint src/",
         "format": "prettier --write src/",
         "format:check": "prettier --check src/",
-        "build": "terser src/better-tab.js -o better-tab.min.js --compress --mangle"
+        "build": "terser src/better-tab.js -o better-tab.min.js --compress --mangle",
+        "prepack": "npm run build"
     },
     "engines": {
         "node": ">=24.12.0"
