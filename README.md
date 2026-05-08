@@ -25,7 +25,8 @@ import "./path/to/better-tab.js";
 That's it. The library patches `chrome.tabs` automatically on import - no manual
 setup required.
 
-> Manifest V3 is required. See `test/extension/` for a working example.
+> Manifest V3 is required. See `test/extension/` for a working example. Run
+> `make test-extension-dist` before loading the test extension locally.
 
 ## How It Works
 
