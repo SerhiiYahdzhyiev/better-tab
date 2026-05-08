@@ -22,7 +22,6 @@ BetterTab.close = async function () {
     await chrome.tabs.remove(this.id);
     this.removed = true;
   }
-  // TODO: "Garbage collect" | nullify this, self-destruct ?
 };
 
 BetterTab.discard = function () {
@@ -248,4 +247,4 @@ chrome.tabs.move = mp;
 chrome.tabs.query = qp;
 chrome.tabs.update = up;
 
-console.debug("Better Tab initalized!");
+console.debug("Better Tab initialized!");
