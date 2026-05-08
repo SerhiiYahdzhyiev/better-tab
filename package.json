@@ -2,6 +2,7 @@
     "name": "better-tab",
     "version": "0.1.0",
     "description": "Make your chrome.tabs.Tab smarter.",
+    "license": "WTFPL",
     "scripts": {
         "lint": "eslint src/",
         "format": "prettier --write src/",
