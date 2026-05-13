@@ -28,6 +28,8 @@ function BetterTab(chromeTab) {
   this.unmute = this.unmute.bind(this);
 }
 
+BetterTab.prototype = BetterTab;
+
 BetterTab.close = async function () {
   if (!this.removed) {
     await chrome.tabs.remove(this.id);
