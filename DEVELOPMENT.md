@@ -96,3 +96,6 @@ Current test modules:
   BetterTab workflow, including the changed tab ID after discard.
 - `mute.js` exercises the `tab.mute()` and `tab.unmute()` instance helpers and
   then closes the test tab.
+- `compatibility.js` exercises overloaded native signatures that Better Tab
+  proxies must preserve, including callback-style `query`, `get`, `getCurrent`,
+  no-tab-id `update`, and no-tab-id `discard`.

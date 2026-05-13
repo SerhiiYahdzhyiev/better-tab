@@ -72,169 +72,193 @@ BetterTab.focus = function (callback) {
 Object.assign(globalThis, { BetterTab });
 Object.assign(globalThis, { og_query: chrome.tabs.query });
 
+function isFunction(value) {
+  return typeof value === "function";
+}
+
+function lastCallback(args) {
+  const lastArg = args[args.length - 1];
+  return isFunction(lastArg) ? lastArg : null;
+}
+
+function chromeLastError() {
+  return chrome.runtime && chrome.runtime.lastError;
+}
+
+function wrapTab(tab) {
+  return tab ? new BetterTab(tab) : tab;
+}
+
+function wrapTabs(tabs) {
+  return tabs.map(wrapTab);
+}
+
+function wrapTabResult(result) {
+  return Array.isArray(result) ? result.map(wrapTab) : wrapTab(result);
+}
+
+function callWithWrappedCallback(fn, args, callback, wrapResult) {
+  const callArgs = args.slice();
+  callArgs.push((result) => callback(wrapResult(result)));
+  fn(...callArgs);
+}
+
+function callWithWrappedPromise(fn, args, wrapResult) {
+  return new Promise((res, rej) => {
+    fn(...args, (result) => {
+      const error = chromeLastError();
+      if (error) {
+        rej(error);
+      } else {
+        res(wrapResult(result));
+      }
+    });
+  });
+}
+
+function normalizeQueryArgs(args) {
+  const callback = lastCallback(args);
+  const queryInfo =
+    isFunction(args[0]) || !args.length || !args[0] ? {} : args[0];
+  return { callback, args: [queryInfo] };
+}
+
+function normalizeCreateArgs(args) {
+  const callback = lastCallback(args);
+  const createProperties =
+    isFunction(args[0]) || !args.length || !args[0] ? {} : args[0];
+  return { callback, args: [createProperties] };
+}
+
+function normalizeUpdateArgs(args) {
+  const callback = lastCallback(args);
+  const values = callback ? args.slice(0, -1) : args.slice();
+  return { callback, args: values };
+}
+
+function normalizeOptionalTabIdArgs(args) {
+  const callback = lastCallback(args);
+  const values = callback ? args.slice(0, -1) : args.slice();
+  return { callback, args: values };
+}
+
 const qp = new Proxy(chrome.tabs.query, {
   apply(fn, this_, args) {
-    if (!args.length || !args[0]) args[0] = {};
-    const og_cb = args[1];
-    if (og_cb) {
-      args[1] = (tabs) => {
-        const wrappedTabs = tabs.map((t) => new BetterTab(t));
-        return og_cb(wrappedTabs);
-      };
-    } else {
-      return new Promise((res, rej) => {
-        fn(...args, (tabs) => {
-          if (chrome.runtime && chrome.runtime.lastError) {
-            rej(chrome.runtime.lastError);
-          } else {
-            res(tabs.map((t) => new BetterTab(t)));
-          }
-        });
-      });
+    const normalized = normalizeQueryArgs(args);
+    if (normalized.callback) {
+      normalized.args.push((tabs) => normalized.callback(wrapTabs(tabs)));
+      return fn.apply(this_, normalized.args);
     }
-    return fn.apply(this_, args);
+    return callWithWrappedPromise(fn, normalized.args, wrapTabs);
   },
 });
 
 const cp = new Proxy(chrome.tabs.create, {
   apply(fn, _, args) {
-    if (!args.length || !args[0]) args[0] = {};
-    const cb = args[1];
-    if (cb) {
-      fn(args[0], (tab) => cb(new BetterTab(tab)));
-    } else {
-      return new Promise((res, rej) => {
-        fn(...args, (tab) => {
-          if (chrome.runtime && chrome.runtime.lastError) {
-            rej(chrome.runtime.lastError);
-          } else {
-            res(new BetterTab(tab));
-          }
-        });
-      });
+    const normalized = normalizeCreateArgs(args);
+    if (normalized.callback) {
+      return callWithWrappedCallback(
+        fn,
+        normalized.args,
+        normalized.callback,
+        wrapTab
+      );
     }
+    return callWithWrappedPromise(fn, normalized.args, wrapTab);
   },
 });
 
 const gp = new Proxy(chrome.tabs.get, {
   apply(fn, _, args) {
-    return new Promise((res, rej) => {
-      fn(...args, (tab) => {
-        if (chrome.runtime && chrome.runtime.lastError) {
-          rej(chrome.runtime.lastError);
-        } else {
-          res(new BetterTab(tab));
-        }
-      });
-    });
+    const callback = lastCallback(args);
+    const callArgs = callback ? args.slice(0, -1) : args;
+    if (callback) {
+      return callWithWrappedCallback(fn, callArgs, callback, wrapTab);
+    }
+    return callWithWrappedPromise(fn, callArgs, wrapTab);
   },
 });
 
 const gcp = new Proxy(chrome.tabs.getCurrent, {
-  async apply(fn) {
-    const tab = await fn();
-    if (tab) return new BetterTab(tab);
-    try {
-      const windows = await chrome.windows.getAll();
-      const visible = windows.filter(
-        (w) => (w.focused || w.state !== "minimized") && w.type === "normal"
-      );
-      if (visible.length) {
-        const candidates = await chrome.tabs.query({
-          windowId: visible[0].id,
-          active: true,
-        });
-        if (candidates.length) return candidates[0];
+  async apply(fn, _, args) {
+    const callback = lastCallback(args);
+    const getCurrentTab = async () => {
+      const tab = await fn();
+      if (tab) return wrapTab(tab);
+      try {
+        const windows = await chrome.windows.getAll();
+        const visible = windows.filter(
+          (w) => (w.focused || w.state !== "minimized") && w.type === "normal"
+        );
+        if (visible.length) {
+          const candidates = await chrome.tabs.query({
+            windowId: visible[0].id,
+            active: true,
+          });
+          if (candidates.length) return candidates[0];
+        }
+      } catch (error) {
+        console.error(error);
+        return undefined;
       }
-    } catch (error) {
-      console.error(error);
-      return undefined;
+    };
+    if (callback) {
+      getCurrentTab().then(callback);
+      return;
     }
+    return getCurrentTab();
   },
 });
 
 const up = new Proxy(chrome.tabs.update, {
   apply(fn, _, args) {
-    const lastArg = args[args.length - 1];
-    const cb = typeof lastArg === "function" ? lastArg : null;
-    if (cb) {
-      args[args.length - 1] = (tab) => cb(new BetterTab(tab));
-      fn.apply(null, args);
-    } else {
-      return new Promise((res, rej) => {
-        fn(...args, (tab) => {
-          if (chrome.runtime && chrome.runtime.lastError) {
-            rej(chrome.runtime.lastError);
-          } else {
-            res(new BetterTab(tab));
-          }
-        });
-      });
+    const normalized = normalizeUpdateArgs(args);
+    if (normalized.callback) {
+      return callWithWrappedCallback(
+        fn,
+        normalized.args,
+        normalized.callback,
+        wrapTab
+      );
     }
+    return callWithWrappedPromise(fn, normalized.args, wrapTab);
   },
 });
 
 const dp = new Proxy(chrome.tabs.duplicate, {
   apply(fn, _, args) {
-    const cb = args[1];
-    if (cb) {
-      fn(args[0], (tab) => cb(tab ? new BetterTab(tab) : undefined));
-    } else {
-      return new Promise((res, rej) => {
-        fn(...args, (tab) => {
-          if (chrome.runtime && chrome.runtime.lastError) {
-            rej(chrome.runtime.lastError);
-          } else {
-            res(tab ? new BetterTab(tab) : undefined);
-          }
-        });
-      });
+    const callback = lastCallback(args);
+    const callArgs = callback ? args.slice(0, -1) : args;
+    if (callback) {
+      return callWithWrappedCallback(fn, callArgs, callback, wrapTab);
     }
+    return callWithWrappedPromise(fn, callArgs, wrapTab);
   },
 });
 
 const disp = new Proxy(chrome.tabs.discard, {
   apply(fn, _, args) {
-    const lastArg = args[args.length - 1];
-    const cb = typeof lastArg === "function" ? lastArg : null;
-    if (cb) {
-      args[args.length - 1] = (tab) =>
-        cb(tab ? new BetterTab(tab) : undefined);
-      fn.apply(null, args);
-    } else {
-      return new Promise((res, rej) => {
-        fn(...args, (tab) => {
-          if (chrome.runtime && chrome.runtime.lastError) {
-            rej(chrome.runtime.lastError);
-          } else {
-            res(tab ? new BetterTab(tab) : undefined);
-          }
-        });
-      });
+    const normalized = normalizeOptionalTabIdArgs(args);
+    if (normalized.callback) {
+      return callWithWrappedCallback(
+        fn,
+        normalized.args,
+        normalized.callback,
+        wrapTab
+      );
     }
+    return callWithWrappedPromise(fn, normalized.args, wrapTab);
   },
 });
 
 const mp = new Proxy(chrome.tabs.move, {
   apply(fn, _, args) {
-    const wrapResult = (result) =>
-      Array.isArray(result)
-        ? result.map((t) => new BetterTab(t))
-        : new BetterTab(result);
-    const cb = args[2];
-    if (cb) {
-      fn(args[0], args[1], (result) => cb(wrapResult(result)));
-    } else {
-      return new Promise((res, rej) => {
-        fn(...args, (result) => {
-          if (chrome.runtime && chrome.runtime.lastError) {
-            rej(chrome.runtime.lastError);
-          } else {
-            res(wrapResult(result));
-          }
-        });
-      });
+    const callback = lastCallback(args);
+    const callArgs = callback ? args.slice(0, -1) : args;
+    if (callback) {
+      return callWithWrappedCallback(fn, callArgs, callback, wrapTabResult);
     }
+    return callWithWrappedPromise(fn, callArgs, wrapTabResult);
   },
 });
 
