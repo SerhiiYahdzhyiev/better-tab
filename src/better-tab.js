@@ -7,10 +7,21 @@ function BetterTab(chromeTab) {
   this.removed = false;
   this.close = this.close.bind(this);
   this.remove = this.close.bind(this);
+  this.connect = this.connect.bind(this);
   this.detectLanguage = this.detectLanguage.bind(this);
   this.discard = this.discard.bind(this);
   this.duplicate = this.duplicate.bind(this);
+  this.getZoom = this.getZoom.bind(this);
+  this.getZoomSettings = this.getZoomSettings.bind(this);
+  this.goBack = this.goBack.bind(this);
+  this.goForward = this.goForward.bind(this);
+  this.group = this.group.bind(this);
+  this.highlight = this.highlight.bind(this);
   this.reload = this.reload.bind(this);
+  this.sendMessage = this.sendMessage.bind(this);
+  this.setZoom = this.setZoom.bind(this);
+  this.setZoomSettings = this.setZoomSettings.bind(this);
+  this.ungroup = this.ungroup.bind(this);
   this.update = this.update.bind(this);
   this.focus = this.focus.bind(this);
   this.mute = this.mute.bind(this);
@@ -34,14 +45,88 @@ BetterTab.duplicate = function () {
   return chrome.tabs.duplicate(this.id);
 };
 
+BetterTab.connect = function (connectInfo) {
+  if (this.removed) return;
+  return chrome.tabs.connect(this.id, connectInfo);
+};
+
 BetterTab.mute = async function (callback) {
   return await this.update({ muted: true }, callback);
+};
+
+BetterTab.getZoom = function (callback) {
+  if (this.removed) return;
+  if (callback) return chrome.tabs.getZoom(this.id, callback);
+  return chrome.tabs.getZoom(this.id);
+};
+
+BetterTab.getZoomSettings = function (callback) {
+  if (this.removed) return;
+  if (callback) return chrome.tabs.getZoomSettings(this.id, callback);
+  return chrome.tabs.getZoomSettings(this.id);
+};
+
+BetterTab.goBack = function (callback) {
+  if (this.removed) return;
+  if (callback) return chrome.tabs.goBack(this.id, callback);
+  return chrome.tabs.goBack(this.id);
+};
+
+BetterTab.goForward = function (callback) {
+  if (this.removed) return;
+  if (callback) return chrome.tabs.goForward(this.id, callback);
+  return chrome.tabs.goForward(this.id);
+};
+
+BetterTab.group = function (options = {}, callback) {
+  if (this.removed) return;
+  const groupOptions = { ...options, tabIds: this.id };
+  if (callback) return chrome.tabs.group(groupOptions, callback);
+  return chrome.tabs.group(groupOptions);
+};
+
+BetterTab.highlight = function (callback) {
+  if (this.removed) return;
+  const highlightInfo = { windowId: this.windowId, tabs: this.index };
+  if (callback) return chrome.tabs.highlight(highlightInfo, callback);
+  return chrome.tabs.highlight(highlightInfo);
 };
 
 BetterTab.reload = async function (payload) {
   if (this.removed) return;
   await chrome.tabs.reload(this.id, payload);
   return this;
+};
+
+BetterTab.sendMessage = function (message, options, callback) {
+  if (this.removed) return;
+  if (isFunction(options)) {
+    return chrome.tabs.sendMessage(this.id, message, options);
+  }
+  if (callback) {
+    return chrome.tabs.sendMessage(this.id, message, options, callback);
+  }
+  return chrome.tabs.sendMessage(this.id, message, options);
+};
+
+BetterTab.setZoom = function (zoomFactor, callback) {
+  if (this.removed) return;
+  if (callback) return chrome.tabs.setZoom(this.id, zoomFactor, callback);
+  return chrome.tabs.setZoom(this.id, zoomFactor);
+};
+
+BetterTab.setZoomSettings = function (zoomSettings, callback) {
+  if (this.removed) return;
+  if (callback) {
+    return chrome.tabs.setZoomSettings(this.id, zoomSettings, callback);
+  }
+  return chrome.tabs.setZoomSettings(this.id, zoomSettings);
+};
+
+BetterTab.ungroup = function (callback) {
+  if (this.removed) return;
+  if (callback) return chrome.tabs.ungroup(this.id, callback);
+  return chrome.tabs.ungroup(this.id);
 };
 
 BetterTab.unmute = async function (callback) {

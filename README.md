@@ -238,6 +238,67 @@ const lang = await tab.detectLanguage();
 console.log(lang); // e.g. "en"
 ```
 
+### `tab.connect(connectInfo?)`
+
+Opens a long-lived port to content scripts in the tab.
+
+```javascript
+const port = tab.connect({ name: "panel" });
+```
+
+### `tab.sendMessage(message, options?, callback?)`
+
+Sends a message to content scripts in the tab.
+
+```javascript
+const response = await tab.sendMessage({ type: "ping" });
+```
+
+### `tab.goBack()` / `tab.goForward()`
+
+Navigates the tab through its history.
+
+```javascript
+await tab.goBack();
+await tab.goForward();
+```
+
+### `tab.getZoom()` / `tab.setZoom(zoomFactor)`
+
+Reads or changes the tab's zoom factor.
+
+```javascript
+const zoom = await tab.getZoom();
+await tab.setZoom(zoom + 0.1);
+```
+
+### `tab.getZoomSettings()` / `tab.setZoomSettings(zoomSettings)`
+
+Reads or changes the tab's zoom settings.
+
+```javascript
+const settings = await tab.getZoomSettings();
+await tab.setZoomSettings({ ...settings, scope: "per-tab" });
+```
+
+### `tab.group(options?)` / `tab.ungroup()`
+
+Adds the tab to a group or removes it from its current group.
+
+```javascript
+const groupId = await tab.group();
+await tab.ungroup();
+```
+
+### `tab.highlight()`
+
+Highlights the tab in its current window.
+
+```javascript
+const window = await tab.highlight();
+console.log(window.id);
+```
+
 ## Properties
 
 ### `tab.removed`

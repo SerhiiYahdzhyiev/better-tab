@@ -99,3 +99,5 @@ Current test modules:
 - `compatibility.js` exercises overloaded native signatures that Better Tab
   proxies must preserve, including callback-style `query`, `get`, `getCurrent`,
   no-tab-id `update`, and no-tab-id `discard`.
+- `instance-helpers.js` exercises non-Tab-returning `BetterTab` helpers for
+  zoom, grouping, highlighting, and history navigation.
