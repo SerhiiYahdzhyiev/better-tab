@@ -198,10 +198,10 @@ Review and harden:
 
 ## Suggested Implementation Order
 
-1. Add shared helpers for wrapping tab results and normalizing callbacks.
-2. Fix optional argument handling for existing proxies.
-3. Add tests for existing proxy compatibility issues.
-4. Add `BetterTab` instance helpers for messaging, navigation, zoom, grouping,
+1. Done: Add shared helpers for wrapping tab results and normalizing callbacks.
+2. Done: Fix optional argument handling for existing proxies.
+3. Done: Add tests for existing proxy compatibility issues.
+4. Done: Add `BetterTab` instance helpers for messaging, navigation, zoom, grouping,
    and highlighting.
 5. Add event wrapping for `onCreated` and `onUpdated`.
 6. Add tests for constants and newer tab fields/query filters.
