@@ -3,7 +3,11 @@ import {assert, callbackValue, sleep} from "./utils.js";
 export default async function() {
     console.debug("Running test: instance-helpers...");
 
-    const tab = await chrome.tabs.create({active: false});
+    const tab = await chrome.tabs.create({
+        active: false,
+        url: "https://example.com",
+    });
+    await sleep(500);
 
     const zoom = await tab.getZoom();
     assert(typeof zoom === "number", "tab.getZoom() should return a number");
