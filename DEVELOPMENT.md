@@ -101,3 +101,5 @@ Current test modules:
   no-tab-id `update`, and no-tab-id `discard`.
 - `instance-helpers.js` exercises non-Tab-returning `BetterTab` helpers for
   zoom, grouping, highlighting, and history navigation.
+- `events.js` exercises wrapped `chrome.tabs.onCreated` and
+  `chrome.tabs.onUpdated` payloads and listener removal semantics.

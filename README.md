@@ -137,6 +137,29 @@ chrome.tabs.move([tab1.id, tab2.id], { index: -1 }, (tabs) => {
 });
 ```
 
+## Wrapped Events
+
+The following `chrome.tabs` events are patched so full `Tab` payloads are
+delivered as `BetterTab` instances. Listener management methods such as
+`removeListener` and `hasListener` continue to use your original listener
+function.
+
+### `chrome.tabs.onCreated`
+
+```javascript
+chrome.tabs.onCreated.addListener((tab) => {
+    console.log(tab); // BetterTab
+});
+```
+
+### `chrome.tabs.onUpdated`
+
+```javascript
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    console.log(tab); // BetterTab
+});
+```
+
 ## BetterTab Instance Methods
 
 All methods are no-ops if `tab.removed` is `true`.

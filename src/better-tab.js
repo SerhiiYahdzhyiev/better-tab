@@ -229,6 +229,49 @@ function normalizeOptionalTabIdArgs(args) {
   return { callback, args: values };
 }
 
+function wrapEventListener(
+  listenerMap,
+  listener,
+  wrapListener,
+  create = true
+) {
+  if (!isFunction(listener)) return listener;
+  if (create && !listenerMap.has(listener)) {
+    listenerMap.set(listener, wrapListener(listener));
+  }
+  return listenerMap.get(listener) || listener;
+}
+
+function wrapTabEvent(event, wrapListener) {
+  const listenerMap = new WeakMap();
+
+  return new Proxy(event, {
+    get(target, prop) {
+      if (prop === "addListener") {
+        return (listener, ...args) =>
+          target.addListener(
+            wrapEventListener(listenerMap, listener, wrapListener),
+            ...args
+          );
+      }
+      if (prop === "removeListener") {
+        return (listener) =>
+          target.removeListener(
+            wrapEventListener(listenerMap, listener, wrapListener, false)
+          );
+      }
+      if (prop === "hasListener") {
+        return (listener) =>
+          target.hasListener(
+            wrapEventListener(listenerMap, listener, wrapListener, false)
+          );
+      }
+      const value = target[prop];
+      return isFunction(value) ? value.bind(target) : value;
+    },
+  });
+}
+
 const qp = new Proxy(chrome.tabs.query, {
   apply(fn, this_, args) {
     const normalized = normalizeQueryArgs(args);
@@ -357,5 +400,19 @@ chrome.tabs.getCurrent = gcp;
 chrome.tabs.move = mp;
 chrome.tabs.query = qp;
 chrome.tabs.update = up;
+chrome.tabs.onCreated = wrapTabEvent(
+  chrome.tabs.onCreated,
+  (listener) =>
+    function (tab, ...args) {
+      return listener(wrapTab(tab), ...args);
+    }
+);
+chrome.tabs.onUpdated = wrapTabEvent(
+  chrome.tabs.onUpdated,
+  (listener) =>
+    function (tabId, changeInfo, tab, ...args) {
+      return listener(tabId, changeInfo, wrapTab(tab), ...args);
+    }
+);
 
 console.debug("Better Tab initialized!");

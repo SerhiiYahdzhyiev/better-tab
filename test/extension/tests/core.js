@@ -4,6 +4,7 @@ import proxyTest from "./proxy.js";
 import muteTest from "./mute.js";
 import compatibilityTest from "./compatibility.js";
 import instanceHelpersTest from "./instance-helpers.js";
+import eventsTest from "./events.js";
 
 
 export async function runCases() {
@@ -13,4 +14,5 @@ export async function runCases() {
     await muteTest();
     await compatibilityTest();
     await instanceHelpersTest();
+    await eventsTest();
 };
