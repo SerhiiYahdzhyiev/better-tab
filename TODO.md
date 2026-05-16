@@ -22,6 +22,7 @@ Better Tab currently wraps `chrome.tabs` methods that return `tabs.Tab` objects:
 Current `BetterTab` instance helpers:
 
 - `tab.close()` / `tab.remove()`
+- `tab.connect(connectInfo?)`
 - `tab.update(updateProperties, callback?)`
 - `tab.focus(callback?)`
 - `tab.mute(callback?)`
@@ -30,12 +31,32 @@ Current `BetterTab` instance helpers:
 - `tab.discard()`
 - `tab.duplicate()`
 - `tab.detectLanguage()`
+- `tab.sendMessage(message, options?, callback?)`
+- `tab.goBack(callback?)`
+- `tab.goForward(callback?)`
+- `tab.getZoom(callback?)`
+- `tab.setZoom(zoomFactor, callback?)`
+- `tab.getZoomSettings(callback?)`
+- `tab.setZoomSettings(zoomSettings, callback?)`
+- `tab.group(options?, callback?)`
+- `tab.ungroup(callback?)`
+- `tab.highlight(callback?)`
+
+Wrapped `chrome.tabs` events:
+
+- `chrome.tabs.onCreated`
+- `chrome.tabs.onUpdated`
 
 ## API Gaps
 
-### Missing Method Proxies
+### Native Method Proxy Scope
 
-These `chrome.tabs` methods are not currently proxied by the library:
+Decision: native `chrome.tabs` methods that do not return `tabs.Tab` objects
+remain unproxied. Better Tab's proxy layer focuses on wrapping returned
+`tabs.Tab` objects and full-tab event payloads. Tab-scoped convenience for these
+operations is provided through `BetterTab` instance helpers instead.
+
+Native methods intentionally left unproxied:
 
 - `chrome.tabs.captureVisibleTab`
 - `chrome.tabs.connect`
@@ -55,19 +76,17 @@ These `chrome.tabs` methods are not currently proxied by the library:
 
 Notes:
 
-- `detectLanguage`, `reload`, and `remove` exist as `BetterTab` instance helpers,
-  but native `chrome.tabs.*` calls are not proxied.
-- Most methods above do not return `tabs.Tab` objects, so proxying them is mainly
-  about consistent Promise/callback behavior and preserving the patched API
-  surface rather than wrapping returned tabs.
+- `detectLanguage`, `reload`, and `remove` exist as `BetterTab` instance helpers.
+- Most methods above do not return `tabs.Tab` objects, so proxying them would not
+  add BetterTab wrapping behavior.
 - `captureVisibleTab` is window-scoped, not tab-instance-scoped, so it may not
   need a `BetterTab` instance helper.
 - `highlight` returns a `windows.Window`, not a `tabs.Tab`; wrapping the return
   value is probably out of scope unless the project expands into window helpers.
 
-### Missing BetterTab Instance Helpers
+### BetterTab Instance Helpers
 
-Consider adding tab-scoped helpers for:
+Done:
 
 - `tab.connect(connectInfo?)`
 - `tab.sendMessage(message, options?)`
@@ -90,11 +109,9 @@ Potential helper behavior:
 - `tab.highlight()` should use `this.index` and `this.windowId`, because
   `chrome.tabs.highlight` takes tab indexes, not tab IDs.
 
-### Missing Event Coverage
+### Event Coverage
 
-Events are not currently wrapped.
-
-Events that pass a `tabs.Tab` and should wrap it as `BetterTab`:
+Done:
 
 - `chrome.tabs.onCreated`
 - `chrome.tabs.onUpdated`
@@ -160,26 +177,17 @@ Update-property coverage to test:
 - `selected` deprecated, but still part of the API
 - `url`
 
-## Known Compatibility Risks
+## Addressed Compatibility Risks
 
 ### Optional Argument Handling
 
-Some proxied methods need stricter argument normalization to match native
-Chrome behavior.
+Done: proxied methods now normalize overloaded signatures before forwarding to
+Chrome.
 
-- `chrome.tabs.update({ ... })` may be forwarded incorrectly as `tabId` instead
-  of `updateProperties`.
-- `chrome.tabs.discard()` may be forwarded incorrectly when no `tabId` is
-  provided and Promise mode is used.
-- `chrome.tabs.get` is currently Promise-only in Better Tab, while the native
-  API also supports callback style.
-- `chrome.tabs.getCurrent` is currently Promise-only in Better Tab, while the
-  native API also supports callback style.
+Covered signatures:
 
-Add regression tests for:
-
-- `await chrome.tabs.update({ active: true })`
-- `chrome.tabs.update({ active: true }, callback)`
+- `await chrome.tabs.update({ ... })`
+- `chrome.tabs.update({ ... }, callback)`
 - `await chrome.tabs.discard()`
 - `chrome.tabs.discard(callback)`
 - `chrome.tabs.get(tabId, callback)`
@@ -187,14 +195,12 @@ Add regression tests for:
 
 ### Undefined Tab Results
 
-Some methods can resolve to `undefined`. Proxies should avoid calling
+Done: tab wrapping now preserves `undefined` instead of calling
 `new BetterTab(undefined)`.
-
-Review and harden:
 
 - `chrome.tabs.update`
 - `chrome.tabs.getCurrent`
-- Any new proxy that wraps optional tab results
+- Optional tab results from `duplicate`, `discard`, and future tab wrappers
 
 ## Suggested Implementation Order
 
@@ -203,9 +209,9 @@ Review and harden:
 3. Done: Add tests for existing proxy compatibility issues.
 4. Done: Add `BetterTab` instance helpers for messaging, navigation, zoom, grouping,
    and highlighting.
-5. Add event wrapping for `onCreated` and `onUpdated`.
-6. Add tests for constants and newer tab fields/query filters.
-7. Decide whether to proxy non-Tab-returning native methods for complete API
+5. Done: Add event wrapping for `onCreated` and `onUpdated`.
+6. Done: Add tests for constants and newer tab fields/query filters.
+7. Done: Decide whether to proxy non-Tab-returning native methods for complete API
    parity or keep them as instance-only helpers.
 
 ## Test Plan
@@ -215,7 +221,7 @@ Extend the manual extension tests under `test/extension/tests/`:
 - Add assertion-style helpers instead of relying only on console inspection.
 - Add one test module for optional argument compatibility.
 - Add one test module for instance helpers.
-- Add one test module for events.
-- Add one test module for constants and newer tab fields.
+- Done: Add one test module for events.
+- Done: Add one test module for constants and newer tab fields.
 
 Keep `DEVELOPMENT.md` updated with any new test module descriptions.

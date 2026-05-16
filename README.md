@@ -35,6 +35,10 @@ These wrappers intercept results and wrap any returned `Tab` objects in `BetterT
 which extends the native tab with its own instance methods. Your existing code that
 calls `chrome.tabs.query()`, etc. keeps working — it just gets smarter tabs back.
 
+Native `chrome.tabs` methods that do not return `Tab` objects remain native.
+Better Tab exposes tab-scoped convenience methods for the most useful of those
+operations, such as `tab.getZoom()`, `tab.group()`, and `tab.sendMessage()`.
+
 ## Proxied Methods
 
 The following `chrome.tabs` methods are replaced. Their signatures are identical to
