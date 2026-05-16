@@ -69,25 +69,33 @@ chrome.tabs.create({ url: "https://example.com" }, (tab) => {
 });
 ```
 
-### `chrome.tabs.get(tabId)`
-
-Promise only.
+### `chrome.tabs.get(tabId, callback?)`
 
 ```javascript
+// Promise
 const tab = await chrome.tabs.get(tabId); // BetterTab
+
+// Callback
+chrome.tabs.get(tabId, (tab) => {
+    console.log(tab); // BetterTab
+});
 ```
 
-### `chrome.tabs.getCurrent()`
+### `chrome.tabs.getCurrent(callback?)`
 
 Returns the tab for the current script context. Falls back to querying the
 active tab in the first visible window if the native call returns nothing
 (e.g. in a service worker context where `getCurrent` may not behave as
 expected).
 
-Promise only.
-
 ```javascript
+// Promise
 const tab = await chrome.tabs.getCurrent(); // BetterTab | undefined
+
+// Callback
+chrome.tabs.getCurrent((tab) => {
+    console.log(tab); // BetterTab | undefined
+});
 ```
 
 ### `chrome.tabs.update(tabId?, updateProperties, callback?)`
