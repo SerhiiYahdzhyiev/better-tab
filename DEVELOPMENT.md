@@ -103,3 +103,6 @@ Current test modules:
   zoom, grouping, highlighting, and history navigation.
 - `events.js` exercises wrapped `chrome.tabs.onCreated` and
   `chrome.tabs.onUpdated` payloads and listener removal semantics.
+- `constants-fields.js` exercises `chrome.tabs` constants, newer copied tab
+  fields, and query/update filters for those fields where the running Chrome
+  version exposes them.

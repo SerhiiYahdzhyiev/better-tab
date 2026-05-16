@@ -5,6 +5,7 @@ import muteTest from "./mute.js";
 import compatibilityTest from "./compatibility.js";
 import instanceHelpersTest from "./instance-helpers.js";
 import eventsTest from "./events.js";
+import constantsFieldsTest from "./constants-fields.js";
 
 
 export async function runCases() {
@@ -15,4 +16,5 @@ export async function runCases() {
     await compatibilityTest();
     await instanceHelpersTest();
     await eventsTest();
+    await constantsFieldsTest();
 };
