@@ -96,3 +96,13 @@ Current test modules:
   BetterTab workflow, including the changed tab ID after discard.
 - `mute.js` exercises the `tab.mute()` and `tab.unmute()` instance helpers and
   then closes the test tab.
+- `compatibility.js` exercises overloaded native signatures that Better Tab
+  proxies must preserve, including callback-style `query`, `get`, `getCurrent`,
+  no-tab-id `update`, and no-tab-id `discard`.
+- `instance-helpers.js` exercises non-Tab-returning `BetterTab` helpers for
+  zoom, grouping, highlighting, and history navigation.
+- `events.js` exercises wrapped `chrome.tabs.onCreated` and
+  `chrome.tabs.onUpdated` payloads and listener removal semantics.
+- `constants-fields.js` exercises `chrome.tabs` constants, newer copied tab
+  fields, and query/update filters for those fields where the running Chrome
+  version exposes them.

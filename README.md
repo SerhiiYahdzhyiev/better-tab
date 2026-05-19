@@ -19,7 +19,7 @@ can perform operations on itself directly.
 2. Import it at the top of your background script:
 
 ```javascript
-import "./path/to/better-tab.js";
+import "./path/to/better-tab.min.js";
 ```
 
 That's it. The library patches `chrome.tabs` automatically on import - no manual
@@ -34,6 +34,10 @@ When loaded, Better Tab replaces several `chrome.tabs` methods with Proxy wrappe
 These wrappers intercept results and wrap any returned `Tab` objects in `BetterTab`,
 which extends the native tab with its own instance methods. Your existing code that
 calls `chrome.tabs.query()`, etc. keeps working — it just gets smarter tabs back.
+
+Native `chrome.tabs` methods that do not return `Tab` objects remain native.
+Better Tab exposes tab-scoped convenience methods for the most useful of those
+operations, such as `tab.getZoom()`, `tab.group()`, and `tab.sendMessage()`.
 
 ## Proxied Methods
 
@@ -65,25 +69,33 @@ chrome.tabs.create({ url: "https://example.com" }, (tab) => {
 });
 ```
 
-### `chrome.tabs.get(tabId)`
-
-Promise only.
+### `chrome.tabs.get(tabId, callback?)`
 
 ```javascript
+// Promise
 const tab = await chrome.tabs.get(tabId); // BetterTab
+
+// Callback
+chrome.tabs.get(tabId, (tab) => {
+    console.log(tab); // BetterTab
+});
 ```
 
-### `chrome.tabs.getCurrent()`
+### `chrome.tabs.getCurrent(callback?)`
 
 Returns the tab for the current script context. Falls back to querying the
 active tab in the first visible window if the native call returns nothing
 (e.g. in a service worker context where `getCurrent` may not behave as
 expected).
 
-Promise only.
-
 ```javascript
+// Promise
 const tab = await chrome.tabs.getCurrent(); // BetterTab | undefined
+
+// Callback
+chrome.tabs.getCurrent((tab) => {
+    console.log(tab); // BetterTab | undefined
+});
 ```
 
 ### `chrome.tabs.update(tabId?, updateProperties, callback?)`
@@ -137,9 +149,34 @@ chrome.tabs.move([tab1.id, tab2.id], { index: -1 }, (tabs) => {
 });
 ```
 
+## Wrapped Events
+
+The following `chrome.tabs` events are patched so full `Tab` payloads are
+delivered as `BetterTab` instances. Listener management methods such as
+`removeListener` and `hasListener` continue to use your original listener
+function.
+
+### `chrome.tabs.onCreated`
+
+```javascript
+chrome.tabs.onCreated.addListener((tab) => {
+    console.log(tab); // BetterTab
+});
+```
+
+### `chrome.tabs.onUpdated`
+
+```javascript
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    console.log(tab); // BetterTab
+});
+```
+
 ## BetterTab Instance Methods
 
 All methods are no-ops if `tab.removed` is `true`.
+Methods that include `callback?` pass the callback through to the underlying
+`chrome.tabs` API.
 
 ### `tab.close()` / `tab.remove()`
 
@@ -192,7 +229,11 @@ tab.mute((updated) => console.log(updated.mutedInfo));
 Unmutes the tab. Shorthand for `tab.update({ muted: false })`.
 
 ```javascript
+// Promise
 await tab.unmute();
+
+// Callback
+tab.unmute((updated) => console.log(updated.mutedInfo));
 ```
 
 ### `tab.reload(reloadProperties?)`
@@ -236,6 +277,87 @@ Detects the primary language of the tab's content.
 ```javascript
 const lang = await tab.detectLanguage();
 console.log(lang); // e.g. "en"
+```
+
+### `tab.connect(connectInfo?)`
+
+Opens a long-lived port to content scripts in the tab.
+
+```javascript
+const port = tab.connect({ name: "panel" });
+```
+
+### `tab.sendMessage(message, options?, callback?)`
+
+Sends a message to content scripts in the tab.
+
+```javascript
+const response = await tab.sendMessage({ type: "ping" });
+```
+
+### `tab.goBack(callback?)` / `tab.goForward(callback?)`
+
+Navigates the tab through its history.
+
+```javascript
+// Promise
+await tab.goBack();
+await tab.goForward();
+
+// Callback
+tab.goBack(() => console.log("went back"));
+```
+
+### `tab.getZoom(callback?)` / `tab.setZoom(zoomFactor, callback?)`
+
+Reads or changes the tab's zoom factor.
+
+```javascript
+// Promise
+const zoom = await tab.getZoom();
+await tab.setZoom(zoom + 0.1);
+
+// Callback
+tab.getZoom((zoom) => console.log(zoom));
+```
+
+### `tab.getZoomSettings(callback?)` / `tab.setZoomSettings(zoomSettings, callback?)`
+
+Reads or changes the tab's zoom settings.
+
+```javascript
+// Promise
+const settings = await tab.getZoomSettings();
+await tab.setZoomSettings({ ...settings, scope: "per-tab" });
+
+// Callback
+tab.getZoomSettings((settings) => console.log(settings));
+```
+
+### `tab.group(options?, callback?)` / `tab.ungroup(callback?)`
+
+Adds the tab to a group or removes it from its current group.
+
+```javascript
+// Promise
+const groupId = await tab.group();
+await tab.ungroup();
+
+// Callback
+tab.group({}, (groupId) => console.log(groupId));
+```
+
+### `tab.highlight(callback?)`
+
+Highlights the tab in its current window.
+
+```javascript
+// Promise
+const window = await tab.highlight();
+console.log(window.id);
+
+// Callback
+tab.highlight((window) => console.log(window.id));
 ```
 
 ## Properties
