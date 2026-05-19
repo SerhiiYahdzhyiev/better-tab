@@ -1,4 +1,4 @@
-Object.assign(globalThis, { bt_version: "0.1.0" });
+Object.assign(globalThis, { bt_version: "0.2.0" });
 
 function BetterTab(chromeTab) {
   Object.assign(this, chromeTab);
