@@ -19,7 +19,7 @@ can perform operations on itself directly.
 2. Import it at the top of your background script:
 
 ```javascript
-import "./path/to/better-tab.js";
+import "./path/to/better-tab.min.js";
 ```
 
 That's it. The library patches `chrome.tabs` automatically on import - no manual
@@ -175,6 +175,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 ## BetterTab Instance Methods
 
 All methods are no-ops if `tab.removed` is `true`.
+Methods that include `callback?` pass the callback through to the underlying
+`chrome.tabs` API.
 
 ### `tab.close()` / `tab.remove()`
 
@@ -227,7 +229,11 @@ tab.mute((updated) => console.log(updated.mutedInfo));
 Unmutes the tab. Shorthand for `tab.update({ muted: false })`.
 
 ```javascript
+// Promise
 await tab.unmute();
+
+// Callback
+tab.unmute((updated) => console.log(updated.mutedInfo));
 ```
 
 ### `tab.reload(reloadProperties?)`
@@ -289,49 +295,69 @@ Sends a message to content scripts in the tab.
 const response = await tab.sendMessage({ type: "ping" });
 ```
 
-### `tab.goBack()` / `tab.goForward()`
+### `tab.goBack(callback?)` / `tab.goForward(callback?)`
 
 Navigates the tab through its history.
 
 ```javascript
+// Promise
 await tab.goBack();
 await tab.goForward();
+
+// Callback
+tab.goBack(() => console.log("went back"));
 ```
 
-### `tab.getZoom()` / `tab.setZoom(zoomFactor)`
+### `tab.getZoom(callback?)` / `tab.setZoom(zoomFactor, callback?)`
 
 Reads or changes the tab's zoom factor.
 
 ```javascript
+// Promise
 const zoom = await tab.getZoom();
 await tab.setZoom(zoom + 0.1);
+
+// Callback
+tab.getZoom((zoom) => console.log(zoom));
 ```
 
-### `tab.getZoomSettings()` / `tab.setZoomSettings(zoomSettings)`
+### `tab.getZoomSettings(callback?)` / `tab.setZoomSettings(zoomSettings, callback?)`
 
 Reads or changes the tab's zoom settings.
 
 ```javascript
+// Promise
 const settings = await tab.getZoomSettings();
 await tab.setZoomSettings({ ...settings, scope: "per-tab" });
+
+// Callback
+tab.getZoomSettings((settings) => console.log(settings));
 ```
 
-### `tab.group(options?)` / `tab.ungroup()`
+### `tab.group(options?, callback?)` / `tab.ungroup(callback?)`
 
 Adds the tab to a group or removes it from its current group.
 
 ```javascript
+// Promise
 const groupId = await tab.group();
 await tab.ungroup();
+
+// Callback
+tab.group({}, (groupId) => console.log(groupId));
 ```
 
-### `tab.highlight()`
+### `tab.highlight(callback?)`
 
 Highlights the tab in its current window.
 
 ```javascript
+// Promise
 const window = await tab.highlight();
 console.log(window.id);
+
+// Callback
+tab.highlight((window) => console.log(window.id));
 ```
 
 ## Properties
